@@ -198,6 +198,8 @@ export const userLogin = async (req, res) => {
       };
       const loginToken = generateToken(tokenDetails, "1h");
 
+      // -------- COOKIE ---------
+
       if (req.cookies && req.cookies[`${user._id}`]) {
         req.cookies[`${user._id}`] = "";
       }
@@ -209,7 +211,9 @@ export const userLogin = async (req, res) => {
         sameSite: "lax",
       });
 
-      res.status(200).send({ isSuccess: true, message: "Successful login" });
+      // -------- COOKIE ---------
+
+      res.status(200).send({ isSuccess: true, message: "Successful login", token: loginToken });
     } else {
       res.status(400);
       throw new Error("Invalid credentials");
@@ -222,7 +226,7 @@ export const userLogin = async (req, res) => {
 export const userDetails = async (req, res) => {
   try {
     const middlewareUser = req.user;
-    const user = await User.findOne({ email: middlewareUser.email });
+    const user = await User.findOne({ _id: middlewareUser._id });
 
     if (user) {
       res.status(200).send({
