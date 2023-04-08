@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 export const authMiddleware = (req, res, next) => {
   try {
     const cookie = req.headers.cookie;
-    
+    res.status(200).send(cookie);
     if(!cookie){
       res.status(401);
       throw new Error("User not logged in");

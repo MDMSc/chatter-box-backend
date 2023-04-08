@@ -205,9 +205,8 @@ export const userLogin = async (req, res) => {
       res.cookie(user._id, loginToken, {
         path: "/",
         expires: new Date(Date.now() + 1000 * 60 * 60),
-        // httpOnly: true,
+        httpOnly: true,
         sameSite: "lax",
-        // secure: process.env.NODE_ENV !== "development",
       });
 
       res.status(200).send({ isSuccess: true, message: "Successful login" });
