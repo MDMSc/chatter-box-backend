@@ -6,10 +6,10 @@ export const authMiddleware = (req, res, next) => {
   try {
     const cookie = req.headers.cookie;
 
-    if(!cookie){
-      res.status(401);
-      throw new Error("User not logged in");
-    }
+    // if(!cookie){
+    //   res.status(401);
+    //   throw new Error("User not logged in");
+    // }
 
     const authToken = cookie.split("=")[1];
 
