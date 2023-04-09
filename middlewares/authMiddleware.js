@@ -6,10 +6,10 @@ export const authMiddleware = (req, res, next) => {
   try {
     const cookie = req.headers.cookie;
 
-    // if(!cookie){
-    //   res.status(401);
-    //   throw new Error("User not logged in");
-    // }
+    if(!cookie){
+      res.status(401);
+      throw new Error("User not logged in");
+    }
 
     const authToken = cookie.split("=")[1];
 
@@ -38,28 +38,27 @@ export const authMiddleware = (req, res, next) => {
 
   // if (
   //   req.headers.authorization &&
-  //   req.headers.authorization.startswith("Bearer")
+  //   req.headers.authorization.startsWith("Bearer")
   // ) {
   //   try {
   //     token = req.headers.authorization.split(" ")[1];
 
   //     if (!token) {
-  //       res.status(401);
-  //       throw new Error("User not logged in");
+  //       res.status(401).send({ isSuccess: false, message: "User not logged in" })
   //     }
 
   //     jwt.verify(token, process.env.JWT_SECRET_KEY, (error, decoded) => {
   //       if (error) {
-  //         res.status(500);
-  //         throw new Error(`${error.message}`);
+  //         res.status(500).send({ isSuccess: false, message: error.message });
   //       }
 
   //       req.user = decoded;
-  //       console.log(req.user);
   //       next();
   //     });
   //   } catch (error) {
   //     res.status(401).send({ isSuccess: false, message: error.message });
   //   }
+  // } else {
+  //   res.status(401).send({ isSuccess: false, message: "User not logged in" });
   // }
 };

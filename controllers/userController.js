@@ -209,11 +209,18 @@ export const userLogin = async (req, res) => {
         expires: new Date(Date.now() + 1000 * 60 * 60),
         httpOnly: true,
         sameSite: "lax",
+        domain: "fri-admin-pr-31.onrender.com"
       });
 
       // -------- COOKIE ---------
 
-      res.status(200).send({ isSuccess: true, message: "Successful login", token: loginToken });
+      res
+        .status(200)
+        .send({
+          isSuccess: true,
+          message: "Successful login",
+          token: loginToken,
+        });
     } else {
       res.status(400);
       throw new Error("Invalid credentials");
@@ -252,12 +259,20 @@ export const userLogout = async (req, res) => {
     if (middleWareUser) {
       if (req.cookies && req.cookies[`${middleWareUser._id}`]) {
         req.cookies[`${middleWareUser._id}`] = "";
-      }
-      res.clearCookie(`${middleWareUser._id}`);
 
-      res
-        .status(200)
-        .send({ isSuccess: true, message: "User logged out successfully" });
+        res.clearCookie(`${middleWareUser._id}`);
+
+        res
+          .status(200)
+          .send({ isSuccess: true, message: "User logged out successfully" });
+      } else {
+        res
+          .status(500)
+          .send({
+            isSuccess: true,
+            message: "User not logged out. Kindly try again.",
+          });
+      }
     } else {
       res.status(500);
       throw new Error("User not logged out. Kindly try again.");
