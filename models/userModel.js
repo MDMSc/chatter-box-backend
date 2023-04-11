@@ -25,7 +25,10 @@ const userSchema = mongoose.Schema(
     verified: {
       type: Boolean,
       default: false,
-    }
+    },
+    tokens: [{
+      type: Object,
+    }]
   },
   {
     timestamps: true,

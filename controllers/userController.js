@@ -200,27 +200,48 @@ export const userLogin = async (req, res) => {
 
       // -------- COOKIE ---------
 
-      if (req.cookies && req.cookies[`${user._id}`]) {
-        req.cookies[`${user._id}`] = "";
-      }
+      // if (req.cookies && req.cookies[`${user._id}`]) {
+      //   req.cookies[`${user._id}`] = "";
+      // }
 
-      res.cookie(user._id, loginToken, {
-        path: "/",
-        expires: new Date(Date.now() + 1000 * 60 * 60),
-        httpOnly: true,
-        sameSite: "lax",
-        domain: "fri-admin-pr-31.onrender.com"
-      });
+      // res.cookie(user._id, loginToken, {
+      //   path: "/",
+      //   expires: new Date(Date.now() + 1000 * 60 * 60),
+      //   httpOnly: true,
+      //   sameSite: "lax",
+      // });
 
       // -------- COOKIE ---------
 
-      res
-        .status(200)
-        .send({
-          isSuccess: true,
-          message: "Successful login",
-          token: loginToken,
+      let oldTokens = user.tokens || [];
+
+      if (oldTokens.length) {
+        oldTokens = oldTokens.filter((token) => {
+          const timeDiff = (Date.now() - parseInt(token.signedAt)) / 1000;
+          if (timeDiff < 1000 * 60 * 60) return token;
         });
+      }
+
+      const setToken = await User.findByIdAndUpdate(
+        { _id: user._id },
+        {
+          tokens: [
+            ...oldTokens,
+            { token: loginToken, signedAt: Date.now().toString() },
+          ],
+        },
+        { new: true, rawResult: true }
+      );
+
+      if (setToken.lastErrorObject.n <= 0) {
+        res.status(400).send({ isSuccess: false, message: "Internal issue" });
+      }
+
+      res.status(200).send({
+        isSuccess: true,
+        message: "Successful login",
+        token: loginToken,
+      });
     } else {
       res.status(400);
       throw new Error("Invalid credentials");
@@ -257,25 +278,62 @@ export const userLogout = async (req, res) => {
   try {
     const middleWareUser = req.user;
     if (middleWareUser) {
-      if (req.cookies && req.cookies[`${middleWareUser._id}`]) {
-        req.cookies[`${middleWareUser._id}`] = "";
+      // -------------- COOKIE ---------------
+      // if (req.cookies && req.cookies[`${middleWareUser._id}`]) {
+      //   req.cookies[`${middleWareUser._id}`] = "";
+      //   res.clearCookie(`${middleWareUser._id}`);
+      //   res
+      //     .status(200)
+      //     .send({ isSuccess: true, message: "User logged out successfully" });
+      // } else {
+      //   res
+      //     .status(500)
+      //     .send({
+      //       isSuccess: true,
+      //       message: "User not logged out. Kindly try again.",
+      //     });
+      // }
+      // ------------- COOKIE -----------------
 
-        res.clearCookie(`${middleWareUser._id}`);
+      if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith("Bearer")
+      ) {
+        const token = req.headers.authorization.split(" ")[1];
 
-        res
-          .status(200)
-          .send({ isSuccess: true, message: "User logged out successfully" });
-      } else {
-        res
-          .status(500)
-          .send({
-            isSuccess: true,
-            message: "User not logged out. Kindly try again.",
-          });
+        if (!token) {
+          res
+            .status(404)
+            .send({ isSuccess: false, message: "Authorization failed" });
+        }
+
+        const userTokens = await User.findOne({ _id: middleWareUser._id });
+
+        if (!userTokens) {
+          res.status(400).send({ isSuccess: false, message: "User not found" });
+        }
+
+        const newTokens = userTokens.tokens.filter((t) => t !== token);
+
+        const updateLogout = await User.findByIdAndUpdate(
+          { _id: middleWareUser._id },
+          { tokens: newTokens },
+          { new: true, rawResult: true }
+        );
+
+        if(updateLogout.lastErrorObject.n <= 0){
+          return res.status(400).send({ isSuccess: false, message: "Internal issue" });
+        }
+
+        res.status(200).send({ isSuccess: true, message: "Logged out successfully" });
       }
     } else {
-      res.status(500);
-      throw new Error("User not logged out. Kindly try again.");
+      res
+        .status(400)
+        .send({
+          isSuccess: false,
+          message: "User not logged out. Kindly try again.",
+        });
     }
   } catch (error) {
     res.status(400).send({ isSuccess: false, message: error.message });
